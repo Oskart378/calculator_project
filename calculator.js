@@ -30,5 +30,39 @@ const calculator = {
 
 };
 
+function initializeCalculatorUI() {
+
+    const numericPad = document.querySelector(".numeric-pad");
+    const operatorsPad = document.querySelector(".operators-pad");
+    const operatorsChars = ["+", "-", "*", "/"];
+    const bottomOperators = [".", "0", "="];
+
+    for(let operator of bottomOperators) {
+        const operatorBtn = document.createElement("div");
+        operatorBtn.classList.add("numeric-btn");
+        operatorBtn.textContent = operator;
+        numericPad.appendChild(operatorBtn);
+    }
+
+    for (let i = 1; i < 10; i++) {
+
+        const numericBtn = document.createElement("div");
+        numericBtn.classList.add("numeric-btn");
+        numericBtn.textContent = i;
+        numericPad.appendChild(numericBtn);
+    }
+
+
+    for(let operator of operatorsChars) {
+        const operatorBtn = document.createElement("div");
+        operatorBtn.classList.add("numeric-btn");
+        operatorBtn.textContent = operator;
+        operatorsPad.appendChild(operatorBtn);
+    }
+
+
+}
+
+initializeCalculatorUI();
 
 console.log(calculator.operate("*", 2, 8));
