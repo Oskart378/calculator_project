@@ -1,203 +1,213 @@
 const calculator = {
-
     firstOperand: 0,
     secondOperand: 0,
     result: 0,
     operator: null,
-
-    add: (a , b) => a + b,
-    substract: (a, b) => a - b,
+  
+    add: (a, b) => a + b,
+    subtract: (a, b) => a - b,  // fixed typo
     multiply: (a, b) => a * b,
-    divide: (a, b) => a / b,
-    power:(a, b) =>  a ** b,
-
-    operate(operator, a , b) {
-
-        this.firstOperand = a;
-        this.secondOperand = b;
-        
-        switch(operator) {
-            case "+": this.result = this.add(a, b);
-            break;
-            case "-": this.result = this.substract(a, b);
-            break;
-            case "*": this.result = this.multiply(a ,b);
-            break;
-            case "/": 
-            if(b == 0)
-                this.result = "ERROR";
-            else
-                this.result = this.divide(a ,b);
-            break;
-            case "^": this.result = this.power(a, b);
-            break;
-            default:
-                break;
-        }
-
-        return this.result;
-    }
-
-};
-
-let currentValue = "";
-let input = "";
-const bufferValue = document.querySelector(".buffer");
-const inputValue = document.querySelector(".input");
-let expectingSecondOperand = false;
-
-
-function initializeCalculatorUI() {
-
+    divide: (a, b) => (b === 0 ? "ERROR" : a / b),
+    power: (a, b) => a ** b,
+  
+    operate(operator, a, b) {
+      this.firstOperand = a;
+      this.secondOperand = b;
+  
+      switch (operator) {
+        case "+":
+          this.result = this.add(a, b);
+          break;
+        case "-":
+          this.result = this.subtract(a, b);
+          break;
+        case "*":
+          this.result = this.multiply(a, b);
+          break;
+        case "/":
+          this.result = this.divide(a, b);
+          break;
+        case "^":
+          this.result = this.power(a, b);
+          break;
+        default:
+          this.result = b; // return b if no valid operator
+          break;
+      }
+      return this.result;
+    },
+  };
+  
+  let currentValue = "";
+  const bufferValue = document.querySelector(".buffer");
+  const inputValue = document.querySelector(".input");
+  let expectingSecondOperand = false;
+  
+  function initializeCalculatorUI() {
     const numericPad = document.querySelector(".numeric-pad");
     const operatorsPad = document.querySelector(".operators-pad");
-    const operatorsChars = ["+", "-", "*", "/"];
+    const docBody = document.querySelector("body");
+  
     const bottomOperators = [".", "0", "="];
-    
-    inputValue.textContent = 0;
-
-    for(let operator of bottomOperators) {
-        const operatorBtn = document.createElement("div");
-        operatorBtn.classList.add("numeric-btn");
-        operatorBtn.textContent = operator;
-        numericPad.appendChild(operatorBtn);
-        operatorBtn.addEventListener("click", handleNumberBtns);
-    }
-
+    const operatorsChars = ["+", "-", "*", "/"];
+    const miscButtons = ["CLR", "DEL"];
+  
+    inputValue.textContent = "0";
+  
+    // Bottom row (., 0, =)
+    bottomOperators.forEach((op) => {
+      const btn = createButton(op, "numeric-btn", handleButtonClick);
+      numericPad.appendChild(btn);
+    });
+  
+    // Numbers 1-9 + ^ button as 10th button
     for (let i = 1; i <= 10; i++) {
-
-        const numericBtn = document.createElement("div");
-        numericBtn.classList.add("numeric-btn");
-        if(i != 10)
-            numericBtn.textContent = i;
-        else
-            numericBtn.textContent = "^";
-
-        numericBtn.addEventListener("click", handleNumberBtns);
-        numericPad.appendChild(numericBtn);
+      let label = i === 10 ? "^" : String(i);
+      const btn = createButton(label, "numeric-btn", handleButtonClick);
+      numericPad.appendChild(btn);
     }
+  
+    // Operator buttons
+    operatorsChars.forEach((op) => {
+      const btn = createButton(op, "numeric-btn", handleButtonClick);
+      operatorsPad.appendChild(btn);
+    });
+  
+    // Misc buttons CLR and DEL
+    miscButtons.forEach((op) => {
+      const btn = createButton(op, "misc-btn", handleButtonClick);
+      numericPad.appendChild(btn);
+    });
 
-
-    for(let operator of operatorsChars) {
-        const operatorBtn = document.createElement("div");
-        operatorBtn.classList.add("numeric-btn");
-        operatorBtn.textContent = operator;
-        operatorBtn.addEventListener("click", handleNumberBtns);
-        operatorsPad.appendChild(operatorBtn);
-    }
-
-    for(let operator of ["CLR", "DEL"]) {
-        const operatorBtn = document.createElement("div");
-        operatorBtn.classList.add("misc-btn");
-        operatorBtn.textContent = operator;
-        operatorBtn.addEventListener("click", handleNumberBtns);
-        numericPad.appendChild(operatorBtn);
-    }
-
-}
-
-
-
-function handleNumberBtns(event) {
-
-    /*currentValue = event.target.textContent;
-    inputValue.textContent = currentValue;*/
-    input = event.target.textContent;
-
-    if(!isNaN(Number(input))) {
-        currentValue += input;
-        inputValue.textContent = Number(currentValue).toString();
-    }
-
-    else if(input === "CLR") {
-        calculator.firstOperand = 0;
-        calculator.secondOperand = 0;
-        currentValue = "";
-        bufferValue.textContent = "";
-        inputValue.textContent = "0";
-        calculator.operator = null;
-        expectingSecondOperand = false;
-    } 
-
-    else if (input === "DEL") {
-
-        if (currentValue === "0" || currentValue === "") return;
-
-        else if(currentValue.length === 1){
-            currentValue = 0;
-            inputValue.textContent = 0;
-        }
-
-        else {
-            currentValue = currentValue.substring(0, currentValue.length-1);
-        inputValue.textContent = currentValue;
-        }
-        
-    }
+    docBody.addEventListener("keydown", keyHandler);
     
+  }
 
-    else if (input === "="){
-        if (!expectingSecondOperand || currentValue === "") return;
+  function keyHandler(event) {
 
-        calculator.secondOperand = Number(currentValue);
-        const result = calculator.operate(
-            calculator.operator,
-            calculator.firstOperand,
-            calculator.secondOperand
-        );
-        inputValue.textContent = result;
-        bufferValue.textContent = `${calculator.firstOperand} ${calculator.operator} ${calculator.secondOperand} =`;
+    const buttons = document.querySelectorAll("button");
+    const foundButton = event.key === "Backspace"? Array.from(buttons).find(btn => btn.textContent === "DEL")
+     : event.key === "Enter" ? Array.from(buttons).find(btn => btn.textContent === "="): Array.from(buttons).find(btn => btn.textContent === event.key);
 
-        currentValue = String(result); // allow chaining
-        expectingSecondOperand = false;
-
+    if(foundButton != null)
+        foundButton.dispatchEvent(new Event("click"));
+  }
+  
+  function createButton(text, className, clickHandler) {
+    const btn = document.createElement("button");
+    btn.textContent = text;
+    btn.classList.add(className);
+    btn.addEventListener("click", clickHandler);
+    return btn;
+  }
+  
+  function handleButtonClick(event) {
+    const input = event.target.textContent;
+  
+    if (!isNaN(Number(input)) && input !== " ") {
+      inputNumber(input);
+    } else if (input === ".") {
+      inputDecimal();
+    } else if (input === "CLR") {
+      clearAll();
+    } else if (input === "DEL") {
+      deleteLast();
+    } else if (input === "=") {
+      calculateResult();
+    } else if (["+", "-", "*", "/", "^"].includes(input)) {
+      handleOperator(input);
     }
-
-
-    else if (["+", "-", "*", "/", "^"].includes(input)) {
-
-        // If just finished an operation and want to continue chaining
-        if (expectingSecondOperand && currentValue === "") {
-            calculator.operator = input;
-            bufferValue.textContent = calculator.firstOperand + " " + input;
-            return;
-        }
-    
-        // If there's a current input, but also already expecting a second operand (user is chaining ops)
-        if (expectingSecondOperand) {
-            calculator.secondOperand = Number(currentValue);
-            const result = calculator.operate(
-                calculator.operator,
-                calculator.firstOperand,
-                calculator.secondOperand
-            );
-    
-            inputValue.textContent = result;
-            bufferValue.textContent = `${calculator.firstOperand} ${calculator.operator} ${calculator.secondOperand} =`;
-    
-            calculator.firstOperand = result;
-            currentValue = "";
-            calculator.operator = input;
-            bufferValue.textContent = result + " " + input;
-            inputValue.textContent = "0";
-        } else {
-            calculator.firstOperand = Number(currentValue || inputValue.textContent);
-            calculator.operator = input;
-            bufferValue.textContent = calculator.firstOperand + " " + input;
-            inputValue.textContent = "0";
-            currentValue = "";
-            expectingSecondOperand = true;
-        }
+  }
+  
+  function inputNumber(digit) {
+    // If currentValue is "0" (from reset), replace instead of append
+    if (currentValue === "0") currentValue = digit;
+    else currentValue += digit;
+  
+    inputValue.textContent = currentValue;
+  }
+  
+  function inputDecimal() {
+    if (!currentValue.includes(".")) {
+      currentValue = currentValue === "" ? "0." : currentValue + ".";
+      inputValue.textContent = currentValue;
     }
-
-    else if (input === "." && !currentValue.includes(".")) {
-        inputValue.textContent += ".";
-        currentValue += input;
+  }
+  
+  function clearAll() {
+    calculator.firstOperand = 0;
+    calculator.secondOperand = 0;
+    calculator.operator = null;
+    currentValue = "";
+    expectingSecondOperand = false;
+    bufferValue.textContent = "";
+    inputValue.textContent = "0";
+  }
+  
+  function deleteLast() {
+    if (currentValue.length > 1) {
+      currentValue = currentValue.slice(0, -1);
+      inputValue.textContent = currentValue;
+    } else {
+      currentValue = "";
+      inputValue.textContent = "0";
     }
-
-}
-
-
-initializeCalculatorUI();
-
-console.log(calculator.operate("*", 2, 8));
+  }
+  
+  function calculateResult() {
+    if (!expectingSecondOperand || currentValue === "") return;
+  
+    calculator.secondOperand = Number(currentValue);
+    const result = calculator.operate(
+      calculator.operator,
+      calculator.firstOperand,
+      calculator.secondOperand
+    );
+  
+    inputValue.textContent = result;
+    bufferValue.textContent = `${calculator.firstOperand} ${calculator.operator} ${calculator.secondOperand} =`;
+  
+    currentValue = String(result);
+    expectingSecondOperand = false;
+    calculator.operator = null;
+  }
+  
+  function handleOperator(operatorInput) {
+    if (expectingSecondOperand && currentValue === "") {
+      // Allow operator change before second operand entered
+      calculator.operator = operatorInput;
+      bufferValue.textContent = `${calculator.firstOperand} ${operatorInput}`;
+      return;
+    }
+  
+    if (expectingSecondOperand) {
+      calculator.secondOperand = Number(currentValue);
+      const result = calculator.operate(
+        calculator.operator,
+        calculator.firstOperand,
+        calculator.secondOperand
+      );
+  
+      inputValue.textContent = result;
+      bufferValue.textContent = `${calculator.firstOperand} ${calculator.operator} ${calculator.secondOperand} =`;
+  
+      calculator.firstOperand = result;
+      currentValue = "";
+      calculator.operator = operatorInput;
+      bufferValue.textContent = `${result} ${operatorInput}`;
+      inputValue.textContent = "0";
+    } else {
+      calculator.firstOperand = Number(currentValue || inputValue.textContent);
+      calculator.operator = operatorInput;
+      bufferValue.textContent = `${calculator.firstOperand} ${operatorInput}`;
+      inputValue.textContent = "0";
+      currentValue = "";
+      expectingSecondOperand = true;
+    }
+  }
+  
+  // Initialize UI after DOM loads
+  initializeCalculatorUI();
+  
+  console.log(calculator.operate("*", 2, 8));
+  
